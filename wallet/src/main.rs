@@ -34,7 +34,7 @@ fn main() {
 	let id: u16 = rand::thread_rng().gen();
 	let wallet = Wallet::new(id);
 
-	for i in 0..10 {
+	for i in 0..1 {
 		wallet.new_transaction(0xf032 + (i << 8), 20.0 + (i as f32) / 10.0);
 		thread::sleep(time::Duration::from_millis(500));
 	}
