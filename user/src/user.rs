@@ -1,4 +1,6 @@
 use std::fmt;
+use std::io::prelude::*;
+use std::net::TcpStream; 
 use crate::transaction::*;
 
 
@@ -18,8 +20,9 @@ impl User {
 
 	pub fn new_transaction(&self, to: u16, value: f32) {
 		let t = Transaction::new(self.id, to, value);
-		
-		let _res = t.broadcast().unwrap();
+
+		let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();	
+		stream.write(&t.serialize()).unwrap();	
 	}
 }
 

@@ -1,12 +1,14 @@
 #[macro_use] extern crate log;
 extern crate simplelog;
 extern crate byteorder;
+extern crate crc;
 
 mod transaction;
 mod user;
 
 use rand::Rng;
 use user::*;
+use std::{thread, time};
 
 
 fn set_logger(level: usize) {
@@ -32,5 +34,8 @@ fn main() {
 	let id: u16 = rand::thread_rng().gen();
 	let user = User::new(id);
 
-	user.new_transaction(0x1234, 20.0);
+	for i in 0..10 {
+		user.new_transaction(0xf032 + (i << 8), 20.0 + (i as f32) / 10.0);
+		thread::sleep(time::Duration::from_millis(500));
+	}
 }

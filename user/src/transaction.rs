@@ -1,8 +1,6 @@
 use std::fmt;
-use std::io::Result;
-use std::io::prelude::*;
-use std::net::TcpStream; 
 use byteorder::*;
+use crc::crc16;
 
 
 #[derive(Debug)]
@@ -20,23 +18,15 @@ impl Transaction {
 		t
 	}
 
-	pub fn broadcast(&self) -> Result<()> {
-		let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();	
-		stream.write(&self.serialize()).unwrap();	
-
-		Ok(())
-	}
-
-	fn serialize(&self) -> [u8; 9] {
-		let mut buf: [u8; 9] = [0; 9];
+	pub fn serialize(&self) -> [u8; 10] {
+		let mut buf: [u8; 10] = [0; 10];
 
 		BigEndian::write_u16(&mut buf[0 .. 2], self.from);
 		BigEndian::write_u16(&mut buf[2 .. 4], self.to);
 		BigEndian::write_f32(&mut buf[4 .. 8], self.value);
 
-		let mut cs = 0x00;
-		for b in buf.iter() { cs ^= b }
-		buf[8] = cs;
+		let cs = crc16::checksum_usb(&buf);
+		BigEndian::write_u16(&mut buf[8 .. 10], cs);
 
 		buf
 	}
@@ -44,6 +34,6 @@ impl Transaction {
 
 impl fmt::Display for Transaction {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "<Transaction from={:02X?} to={:02X?} value={} />", self.from, self.to, self.value)
+		write!(f, "<Transaction from={:04X?} to={:04X?} value={:.2} />", self.from, self.to, self.value)
 	}
 }
