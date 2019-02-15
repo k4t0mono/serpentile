@@ -2,8 +2,8 @@
 extern crate simplelog;
 extern crate byteorder;
 extern crate crc;
+extern crate serpentine;
 
-mod transaction;
 mod user;
 
 use rand::Rng;
