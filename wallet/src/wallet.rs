@@ -5,14 +5,14 @@ use serpentine::utils::*;
 
 
 #[derive(Debug)]
-pub struct User {
+pub struct Wallet {
 	id: u16
 }
 
 
-impl User {
-	pub fn new(id: u16) -> User {
-		let u = User{ id };
+impl Wallet {
+	pub fn new(id: u16) -> Wallet {
+		let u = Wallet{ id };
 		info!("New user: {}", u);
 
 		u
@@ -27,8 +27,8 @@ impl User {
 }
 
 
-impl fmt::Display for User {
+impl fmt::Display for Wallet {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "<User id={:02X?} />", self.id)
+		write!(f, "<Wallet id={:02X?} />", self.id)
 	}
 }

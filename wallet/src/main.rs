@@ -4,10 +4,10 @@ extern crate byteorder;
 extern crate crc;
 extern crate serpentine;
 
-mod user;
+mod wallet;
 
 use rand::Rng;
-use user::*;
+use wallet::*;
 use std::{thread, time};
 
 
@@ -29,13 +29,13 @@ fn set_logger(level: usize) {
 
 fn main() {
 	set_logger(3);
-	info!("Starting user.rs");
+	info!("Starting wallet.rs");
 
 	let id: u16 = rand::thread_rng().gen();
-	let user = User::new(id);
+	let wallet = Wallet::new(id);
 
 	for i in 0..10 {
-		user.new_transaction(0xf032 + (i << 8), 20.0 + (i as f32) / 10.0);
+		wallet.new_transaction(0xf032 + (i << 8), 20.0 + (i as f32) / 10.0);
 		thread::sleep(time::Duration::from_millis(500));
 	}
 }
