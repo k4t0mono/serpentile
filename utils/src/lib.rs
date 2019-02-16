@@ -1,15 +1,15 @@
-#[macro_use] extern crate log;
-extern crate byteorder;
+#[macro_use] extern crate serde_derive;
+extern crate bincode;
 extern crate crc;
 
 
 pub mod utils {
-	use byteorder::*;
 	use crc::crc16;
+	use std::boxed::Box;
 	use std::fmt;
-	use std::io::{Cursor, Error, ErrorKind, Result};
+	use bincode::{serialize, deserialize, ErrorKind};
 
-	#[derive(Debug, Clone)]
+	#[derive(Serialize, Deserialize, Debug, Clone)]
 	pub struct Transaction {
 		from: u16,
 		to: u16,
@@ -21,29 +21,27 @@ pub mod utils {
 			Transaction{ from, to, value }
 		}
 
-		pub fn serialize(&self) -> [u8; 10] {
-			let mut buf: [u8; 10] = [0; 10];
+		pub fn serialize(&self) -> bincode::Result<Vec<u8>> {
+			let mut encoded: Vec<u8> = serialize(&self)?;
 
-			BigEndian::write_u16(&mut buf[0..2], self.from);
-			BigEndian::write_u16(&mut buf[2..4], self.to);
-			BigEndian::write_f32(&mut buf[4..8], self.value);
+			let checksum = crc16::checksum_usb(&encoded[..]);
+			let mut cs = serialize(&checksum)?;
 
-			let cs = crc16::checksum_usb(&buf[0..8]);
-			BigEndian::write_u16(&mut buf[8..10], cs);
+			cs.append(&mut encoded);
 
-			buf
+			Ok(cs)
 		}
 
-		pub fn deserialize(buf: [u8; 10]) -> Result<Transaction> {
-			let cs_r = Cursor::new(&buf[8..10]).read_u16::<BigEndian>()?;
-			let cs_c = crc16::checksum_usb(&buf[0..8]);
-			if cs_r != cs_c  { return Err(Error::new(ErrorKind::InvalidData, "Invalid CRC")) }
+		pub fn deserialize(encoded: &[u8]) -> bincode::Result<Transaction> {
+			let t: Transaction = deserialize(&encoded[2..])?;
 
-			let from = Cursor::new(&buf[0..2]).read_u16::<BigEndian>()?;
-			let to = Cursor::new(&buf[2..4]).read_u16::<BigEndian>()?;
-			let value = Cursor::new(&buf[4..8]).read_f32::<BigEndian>()?;
-
-			Ok(Transaction{ from, to, value })
+			let cs_r: u16 = deserialize(&encoded[..2])?;
+			let cs_c = crc16::checksum_usb(&encoded[2..]);
+			if cs_c != cs_r {
+				return Err(Box::new(ErrorKind::Custom("Invalid CRC".to_string())));
+			}
+			
+			Ok(t)
 		}
 	}
 

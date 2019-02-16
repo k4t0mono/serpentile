@@ -7,6 +7,7 @@ mod block;
 
 use std::net::{TcpListener, TcpStream};
 use std::io::Read;
+use std::option::Option;
 use serpentine::utils::*;
 use ctrl::*;
 
@@ -40,16 +41,22 @@ fn parse_args() -> (usize) {
 	(log_level)
 }
 
-fn handle_client(mut stream: TcpStream) -> std::io::Result<Transaction> {
-	debug!("New connection from {}", stream.peer_addr()?);
+fn handle_client(mut stream: TcpStream) -> Option<Transaction> {
+	trace!("New connection from {}", stream.peer_addr().unwrap());
 
-	let mut buf: [u8; 10] = [0; 10];
-	stream.read(&mut buf)?;
+	let mut buf: Vec<u8> = Vec::new();
+	stream.read_to_end(&mut buf).unwrap();
 
-	let t = Transaction::deserialize(buf)?;
+	let t = match Transaction::deserialize(&buf[1..]) {
+		Ok(v) => v,
+		Err(e) => {
+			debug!("Couldn't read a transaction. Error: {}", e);
+			return None;
+		},
+	};
 	debug!("Recived: {}", t);
 
-	Ok(t)
+	Some(t)
 }
 
 fn main() {
@@ -61,7 +68,7 @@ fn main() {
 
 	let listener = TcpListener::bind("0.0.0.0:34254").unwrap();
 	for stream in listener.incoming() {
-		let t = handle_client(stream.unwrap()).unwrap();
-		ctrl.add_entry(t);
+		let t = handle_client(stream.unwrap());
+		if t.is_some() { ctrl.add_entry(t.unwrap()); }
 	}
 }
