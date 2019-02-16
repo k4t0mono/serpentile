@@ -2,9 +2,13 @@
 extern crate simplelog;
 extern crate serpentine;
 
+mod ctrl;
+mod block;
+
 use std::net::{TcpListener, TcpStream};
 use std::io::Read;
 use serpentine::utils::*;
+use ctrl::*;
 
 
 fn set_logger(level: usize) {
@@ -26,7 +30,7 @@ fn set_logger(level: usize) {
 fn parse_args() -> (usize) {
 	let args: Vec<String> = std::env::args().collect();
 	
-	if args.len() < 2 {
+	if args.len() < 1 {
 		eprintln!("Usage: {} [log-level]", args[0]);
 		panic!("Missing args");
 	}
@@ -36,16 +40,16 @@ fn parse_args() -> (usize) {
 	(log_level)
 }
 
-fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
+fn handle_client(mut stream: TcpStream) -> std::io::Result<Transaction> {
 	debug!("New connection from {}", stream.peer_addr()?);
 
 	let mut buf: [u8; 10] = [0; 10];
 	stream.read(&mut buf)?;
 
 	let t = Transaction::deserialize(buf)?;
-	info!("Recived: {}", t);
+	debug!("Recived: {}", t);
 
-	Ok(())
+	Ok(t)
 }
 
 fn main() {
@@ -53,11 +57,11 @@ fn main() {
 	set_logger(log_level);
 	info!("Starting miner.rs");
 
+	let mut ctrl = Ctrl::new(5);
+
 	let listener = TcpListener::bind("0.0.0.0:34254").unwrap();
 	for stream in listener.incoming() {
-		match stream {
-			Ok(stream) => { handle_client(stream).unwrap(); },
-			Err(e) => { panic!("{:?}", e); },
-		}
+		let t = handle_client(stream.unwrap()).unwrap();
+		ctrl.add_entry(t);
 	}
 }

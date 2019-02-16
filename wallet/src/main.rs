@@ -53,6 +53,6 @@ fn main() {
 
 	for i in 0..n {
 		wallet.new_transaction(0x0032 + ((i as u16) << 8), 20.0 + (i as f32) / 10.0);
-		thread::sleep(time::Duration::from_millis(500));
+		thread::sleep(time::Duration::from_millis(750));
 	}
 }

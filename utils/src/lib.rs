@@ -9,7 +9,7 @@ pub mod utils {
 	use std::fmt;
 	use std::io::{Cursor, Error, ErrorKind, Result};
 
-	#[derive(Debug)]
+	#[derive(Debug, Clone)]
 	pub struct Transaction {
 		from: u16,
 		to: u16,
