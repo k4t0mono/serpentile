@@ -23,6 +23,7 @@ impl Wallet {
 
 		let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();	
 		stream.write(&t.serialize()).unwrap();	
+		info!("Sended: {}", t);
 	}
 }
 

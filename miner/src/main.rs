@@ -23,6 +23,19 @@ fn set_logger(level: usize) {
 }
 
 
+fn parse_args() -> (usize) {
+	let args: Vec<String> = std::env::args().collect();
+	
+	if args.len() < 2 {
+		eprintln!("Usage: {} [log-level]", args[0]);
+		panic!("Missing args");
+	}
+
+	let log_level = args.last().unwrap().parse::<usize>().unwrap_or(3);
+
+	(log_level)
+}
+
 fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
 	debug!("New connection from {}", stream.peer_addr()?);
 
@@ -36,7 +49,8 @@ fn handle_client(mut stream: TcpStream) -> std::io::Result<()> {
 }
 
 fn main() {
-	set_logger(4);
+	let log_level = parse_args();
+	set_logger(log_level);
 	info!("Starting miner.rs");
 
 	let listener = TcpListener::bind("0.0.0.0:34254").unwrap();

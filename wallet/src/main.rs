@@ -26,16 +26,33 @@ fn set_logger(level: usize) {
 	TermLogger::init(log_level, Config::default()).unwrap();
 }
 
+fn parse_args() -> (usize, usize) {
+	let args: Vec<String> = std::env::args().collect();
+
+	if args.len() < 2 {
+		eprintln!("Usage: {} <n-messages> [log-level]", args[0]);
+		panic!("Missing args");
+	}
+
+	let n = args[1].parse::<usize>().unwrap_or(5);
+
+	let c = args.last().unwrap().chars().last().unwrap().to_string();
+	let log_level = if args.len() > 3 { c.parse::<usize>().unwrap_or(3) } else { 3 };
+
+	(n, log_level)
+}
+
 
 fn main() {
-	set_logger(3);
+	let (n, log_level) = parse_args();
+	set_logger(log_level);
 	info!("Starting wallet.rs");
 
 	let id: u16 = rand::thread_rng().gen();
 	let wallet = Wallet::new(id);
 
-	for i in 0..1 {
-		wallet.new_transaction(0xf032 + (i << 8), 20.0 + (i as f32) / 10.0);
+	for i in 0..n {
+		wallet.new_transaction(0x0032 + ((i as u16) << 8), 20.0 + (i as f32) / 10.0);
 		thread::sleep(time::Duration::from_millis(500));
 	}
 }

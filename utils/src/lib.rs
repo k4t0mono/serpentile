@@ -18,10 +18,7 @@ pub mod utils {
 
 	impl Transaction {
 		pub fn new(from: u16, to: u16, value: f32) -> Transaction {
-			let t = Transaction{ from, to, value };
-			info!("New trasanction: {}", t);
-
-			t
+			Transaction{ from, to, value }
 		}
 
 		pub fn serialize(&self) -> [u8; 10] {
