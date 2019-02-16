@@ -1,5 +1,5 @@
-use serpentine::utils::*;
-use crate::block::*;
+use serpentine::transaction::*;
+use serpentine::block::*;
 
 pub struct Ctrl {
 	max_size: usize,
@@ -30,5 +30,6 @@ impl Ctrl {
 
 		self.blocks.push(b);
 		self.entries.clear();
+		self.prev_block += 1;
 	}
 }

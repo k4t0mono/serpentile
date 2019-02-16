@@ -3,12 +3,11 @@ extern crate simplelog;
 extern crate serpentine;
 
 mod ctrl;
-mod block;
 
 use std::net::{TcpListener, TcpStream};
 use std::io::Read;
 use std::option::Option;
-use serpentine::utils::*;
+use serpentine::transaction::*;
 use ctrl::*;
 
 
