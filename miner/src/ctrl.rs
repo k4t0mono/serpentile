@@ -26,7 +26,6 @@ impl Ctrl {
 	fn create_block(&mut self) {
 		let b = new_block(&self.entries[0..5], self.prev_block);
 		info!("Created: {}", b);
-		println!("{:?}", b);
 
 		self.blocks.push(b);
 		self.entries.clear();

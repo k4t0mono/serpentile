@@ -65,9 +65,21 @@ fn main() {
 
 	let mut ctrl = Ctrl::new(5);
 
+	/*
+	for i in 0..5 {
+		let from = 0xe621;
+		let to = 0x0032 + ((i as u16) << 8);
+		let value = 20.0 + (i as f32) / 10.0;
+
+		ctrl.add_entry(Transaction::new(from, to, value));
+	}
+	*/
+
+	
 	let listener = TcpListener::bind("0.0.0.0:34254").unwrap();
 	for stream in listener.incoming() {
 		let t = handle_client(stream.unwrap());
 		if t.is_some() { ctrl.add_entry(t.unwrap()); }
 	}
+	
 }
