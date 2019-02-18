@@ -1,4 +1,6 @@
 use serpentine::{Block, Transaction};
+use std::io::prelude::*;
+use std::net::TcpStream; 
 
 pub struct Ctrl {
 	max_size: usize,
@@ -30,5 +32,16 @@ impl Ctrl {
 		self.prev_block = b.get_id();
 		self.blocks.push(b);
 		self.entries.clear();
+		self.transmit_last_block();
+	}
+
+	fn transmit_last_block(&self) {
+		let mut stream = TcpStream::connect("127.0.0.1:35254").unwrap();
+
+		let block = &self.blocks[self.blocks.len() - 1];
+		let mut buff = vec![0x20];
+		buff.append(&mut block.serialize().unwrap());
+
+		stream.write(&buff).unwrap();
 	}
 }

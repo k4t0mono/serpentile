@@ -36,14 +36,14 @@ impl Transaction {
 	}
 
 	pub fn deserialize(encoded: &[u8]) -> bincode::Result<Transaction> {
-		let t: Transaction = deserialize(&encoded[4..])?;
-
 		let cs_r: u32 = deserialize(&encoded[..4])?;
 		let cs_c = crc32::checksum_ieee(&encoded[4..]);
 		if cs_c != cs_r {
 			return Err(Box::new(ErrorKind::Custom("Invalid CRC".to_string())));
 		}
 		
+		let t: Transaction = deserialize(&encoded[4..])?;
+
 		Ok(t)
 	}
 }
