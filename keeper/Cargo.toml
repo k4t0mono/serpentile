@@ -1,0 +1,10 @@
+[package]
+name = "keeper"
+version = "0.1.0"
+authors = ["KatoMono Enkeli <k4t0mono@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serpentine = { path = "../utils" }
+log = "^0.4"
+simplelog = "^0.5"

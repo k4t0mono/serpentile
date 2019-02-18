@@ -21,10 +21,10 @@ impl Wallet {
 	pub fn new_transaction(&self, to: u16, value: f32) {
 		let t = Transaction::new(self.id, to, value);
 
-		let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();
+		let mut stream = TcpStream::connect("127.0.0.1:58913").unwrap();
 
 		let mut buf = t.serialize().unwrap();
-		buf.insert(0, 0x02);
+		buf.insert(0, 0x10);
 
 		stream.write(&buf).unwrap();	
 		info!("Sended: {}", t);
