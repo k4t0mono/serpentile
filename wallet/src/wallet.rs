@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io::prelude::*;
 use std::net::TcpStream; 
-use serpentine::transaction::*;
+use serpentine::Transaction;
 
 
 #[derive(Debug)]

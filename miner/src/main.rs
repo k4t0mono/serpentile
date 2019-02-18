@@ -7,7 +7,7 @@ mod ctrl;
 use std::net::{TcpListener, TcpStream};
 use std::io::Read;
 use std::option::Option;
-use serpentine::transaction::*;
+use serpentine::Transaction;
 use ctrl::*;
 
 
@@ -27,17 +27,19 @@ fn set_logger(level: usize) {
 }
 
 
-fn parse_args() -> (usize) {
+fn parse_args() -> (usize, usize) {
 	let args: Vec<String> = std::env::args().collect();
 	
-	if args.len() < 1 {
-		eprintln!("Usage: {} [log-level]", args[0]);
+	if args.len() < 2 {
+		eprintln!("Usage: {} <mode> [log-level]", args[0]);
 		panic!("Missing args");
 	}
 
+	let mode = args[1].parse::<usize>().unwrap(); 
+
 	let log_level = args.last().unwrap().parse::<usize>().unwrap_or(3);
 
-	(log_level)
+	(mode, log_level)
 }
 
 fn handle_client(mut stream: TcpStream) -> Option<Transaction> {
@@ -58,14 +60,9 @@ fn handle_client(mut stream: TcpStream) -> Option<Transaction> {
 	Some(t)
 }
 
-fn main() {
-	let log_level = parse_args();
-	set_logger(log_level);
-	info!("Starting miner.rs");
-
+fn debug_mode() {
 	let mut ctrl = Ctrl::new(5);
 
-	/*
 	for i in 0..5 {
 		let from = 0xe621;
 		let to = 0x0032 + ((i as u16) << 8);
@@ -73,13 +70,25 @@ fn main() {
 
 		ctrl.add_entry(Transaction::new(from, to, value));
 	}
-	*/
+}
 
-	
+fn normal_mode() {
+	let mut ctrl = Ctrl::new(5);
+
 	let listener = TcpListener::bind("0.0.0.0:34254").unwrap();
 	for stream in listener.incoming() {
 		let t = handle_client(stream.unwrap());
 		if t.is_some() { ctrl.add_entry(t.unwrap()); }
 	}
-	
+}
+
+fn main() {
+	let (mode, log_level) = parse_args();
+	set_logger(log_level);
+	info!("Starting miner.rs");
+
+	match mode {
+		1 => { debug_mode(); }
+		_ => { normal_mode(); }
+	}
 }

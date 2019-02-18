@@ -1,6 +1,10 @@
 #[macro_use] extern crate serde_derive;
 extern crate bincode;
+extern crate rand;
 extern crate crc;
 
-pub mod transaction;
-pub mod block;
+mod transaction;
+mod block;
+
+pub use crate::block::Block;
+pub use crate::transaction::Transaction;
