@@ -5,10 +5,11 @@ extern crate serpentine;
 mod ctrl;
 
 use std::net::{TcpListener, TcpStream};
-use std::io::Read;
+use std::io::{Read, Write};
 use std::option::Option;
 use serpentine::Transaction;
 use ctrl::*;
+use rand::Rng;
 
 
 fn set_logger(level: usize) {
@@ -27,19 +28,21 @@ fn set_logger(level: usize) {
 }
 
 
-fn parse_args() -> (usize, usize) {
+fn parse_args() -> (String, usize, usize) {
 	let args: Vec<String> = std::env::args().collect();
 	
-	if args.len() < 2 {
-		eprintln!("Usage: {} <mode> [log-level]", args[0]);
+	if args.len() < 3 {
+		eprintln!("Usage: {} <keeper-addr> <mode> [log-level]", args[0]);
 		panic!("Missing args");
 	}
 
-	let mode = args[1].parse::<usize>().unwrap(); 
+	let keeper_addr = args[1].to_string();
+
+	let mode = args[2].parse::<usize>().unwrap(); 
 
 	let log_level = args.last().unwrap().parse::<usize>().unwrap_or(3);
 
-	(mode, log_level)
+	(keeper_addr, mode, log_level)
 }
 
 fn handle_client(mut stream: TcpStream) -> Option<Transaction> {
@@ -82,10 +85,23 @@ fn normal_mode() {
 	}
 }
 
+fn register_listener(addr: String) {
+	let mut stream = TcpStream::connect(addr).unwrap();
+
+	let mut rng = rand::thread_rng();
+	let port: u8 = rng.gen_range(0x00, 0xff);
+
+	let buff = vec![0x03, 0xe7, port];
+
+	stream.write(&buff[..]).unwrap();
+}
+
 fn main() {
-	let (mode, log_level) = parse_args();
+	let (keeper_addr, mode, log_level) = parse_args();
 	set_logger(log_level);
 	info!("Starting miner.rs");
+
+	register_listener(keeper_addr);
 
 	match mode {
 		1 => { debug_mode(); }

@@ -36,7 +36,7 @@ impl Ctrl {
 	}
 
 	fn transmit_last_block(&self) {
-		let mut stream = TcpStream::connect("127.0.0.1:35254").unwrap();
+		let mut stream = TcpStream::connect("127.0.0.1:58913").unwrap();
 
 		let block = &self.blocks[self.blocks.len() - 1];
 		let mut buff = vec![0x20];
