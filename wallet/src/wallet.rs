@@ -1,33 +1,37 @@
 use std::fmt;
 use std::io::prelude::*;
-use std::net::TcpStream;
+use std::net::{TcpStream, SocketAddr};
 use serpentine::Transaction;
 
 
 #[derive(Debug)]
 pub struct Wallet {
-    id: u16
+    id: u16,
+    addrs: Vec<SocketAddr>,
 }
 
 
 impl Wallet {
-    pub fn new(id: u16) -> Wallet {
-        let u = Wallet{ id };
+    pub fn new(id: u16, addrs: Vec<SocketAddr>) -> Wallet {
+        let u = Wallet{ id, addrs };
         info!("New user: {}", u);
 
         u
     }
 
-    pub fn new_transaction(&self, to: u16, value: f32) {
+    pub fn new_transaction(&self, to: u16, value: f32) -> Result<Transaction, &'static str> {
         let t = Transaction::new(self.id, to, value);
 
-        let mut stream = TcpStream::connect("127.0.0.1:58913").unwrap();
+        let mut stream = match TcpStream::connect(&self.addrs[..]) {
+           Ok(s) => s,
+           Err(_) => return Err("Could not broadcast"),
+        };
 
         let mut buf = t.serialize().unwrap();
         buf.insert(0, 0x10);
-
         stream.write(&buf).unwrap();
-        info!("Sended: {}", t);
+
+        Ok(t)
     }
 }
 

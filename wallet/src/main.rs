@@ -4,55 +4,33 @@ extern crate byteorder;
 extern crate crc;
 extern crate serpentine;
 
+mod config;
 mod wallet;
 
+use config::Config;
 use rand::Rng;
 use wallet::*;
-use std::{thread, time};
-
-
-fn set_logger(level: usize) {
-    use simplelog::*;
-
-    let log_level: LevelFilter = match level {
-        0 => LevelFilter::Off,
-        1 => LevelFilter::Error,
-        2 => LevelFilter::Warn,
-        3 => LevelFilter::Info,
-        4 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    };
-
-    TermLogger::init(log_level, Config::default()).unwrap();
-}
-
-fn parse_args() -> (usize, usize) {
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.len() < 2 {
-        eprintln!("Usage: {} <n-messages> [log-level]", args[0]);
-        panic!("Missing args");
-    }
-
-    let n = args[1].parse::<usize>().unwrap_or(5);
-
-    let c = args.last().unwrap().chars().last().unwrap().to_string();
-    let log_level = if args.len() > 3 { c.parse::<usize>().unwrap_or(3) } else { 3 };
-
-    (n, log_level)
-}
+use std::{thread, time, env, process};
 
 
 fn main() {
-    let (n, log_level) = parse_args();
-    set_logger(log_level);
+    let config = Config::new(env::args()).unwrap_or_else(|err| {
+        eprintln!("Error: {}", err);
+        eprintln!("Usage: wallet <num-messages> [hosts-file]");
+        process::exit(1);
+    });
+
     info!("Starting wallet.rs");
 
     let id: u16 = rand::thread_rng().gen();
-    let wallet = Wallet::new(id);
+    let wallet = Wallet::new(id, config.keeper_addrs);
 
-    for i in 0..n {
-        wallet.new_transaction(0x0032 + ((i as u16) << 8), 20.0 + (i as f32) / 10.0);
+    for i in 0..config.n_messages {
+        match wallet.new_transaction(0x0032 + ((i as u16) << 8), 20.0 + (i as f32) / 10.0) {
+            Ok(t) => info!("Broadcasted: {}", t),
+            Err(e) => error!("{}", e),
+        };
+
         thread::sleep(time::Duration::from_millis(750));
     }
 }
