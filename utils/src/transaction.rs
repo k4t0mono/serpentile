@@ -41,7 +41,7 @@ impl Transaction {
         if cs_c != cs_r {
             return Err(Box::new(ErrorKind::Custom("Invalid CRC".to_string())));
         }
-        
+
         let t: Transaction = deserialize(&encoded[4..])?;
 
         Ok(t)

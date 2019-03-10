@@ -1,6 +1,3 @@
-use std::net::SocketAddr;
-
-
 pub struct Config {
     pub port: u16,
 }

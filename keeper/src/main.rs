@@ -69,6 +69,7 @@ fn process_transaction(buf: Vec<u8>, keeper: &mut Keeper) {
         },
     };
 
+    keeper.broadcast_t(&t);
     keeper.add_transaction(t);
 }
 

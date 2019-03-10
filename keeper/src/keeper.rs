@@ -1,5 +1,6 @@
 use serpentine::*;
-use std::net::SocketAddr;
+use std::io::prelude::*;
+use std::net::{SocketAddr, TcpStream};
 
 
 #[derive(Debug)]
@@ -59,5 +60,17 @@ impl Keeper {
 
     pub fn inspect(&self) {
         trace!("{:#?}", self);
+    }
+
+    pub fn broadcast_t(&self, t: &Transaction) {
+        for addr in self.transaction_listeners.iter() {
+            if let Ok(mut stream) = TcpStream::connect(addr) {
+                let mut buf = t.serialize().unwrap();
+                buf.insert(0, 0x10);
+                stream.write(&buf).unwrap();
+            } else {
+                error!("Could not send to {}", addr);
+            }
+        }
     }
 }
