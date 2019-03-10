@@ -2,42 +2,15 @@
 extern crate simplelog;
 extern crate serpentine;
 
+mod config;
 mod keeper;
 
+use std::{env, process};
 use std::net::{SocketAddr, TcpListener, TcpStream, IpAddr};
 use std::io::Read;
 use serpentine::*;
 use keeper::*;
-
-
-fn set_logger(level: usize) {
-    use simplelog::*;
-
-    let log_level: LevelFilter = match level {
-        0 => LevelFilter::Off,
-        1 => LevelFilter::Error,
-        2 => LevelFilter::Warn,
-        3 => LevelFilter::Info,
-        4 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    };
-
-    TermLogger::init(log_level, Config::default()).unwrap();
-}
-
-
-fn parse_args() -> (usize) {
-    let args: Vec<String> = std::env::args().collect();
-    
-    if args.len() < 1 {
-        eprintln!("Usage: {} <mode> [log-level]", args[0]);
-        panic!("Missing args");
-    }
-
-    let log_level = args.last().unwrap().parse::<usize>().unwrap_or(3);
-
-    (log_level)
-}
+use config::Config;
 
 
 fn handle_client(mut stream: TcpStream, keeper: &mut Keeper) {
@@ -101,18 +74,14 @@ fn process_transaction(buf: Vec<u8>, keeper: &mut Keeper) {
 
 
 fn main() {
-    let (log_level) = parse_args();
-    set_logger(log_level);
+    let config = Config::new(env::args()).unwrap_or_else(|err| {
+        eprintln!("Error: {}", err);
+        eprintln!("Usage: wallet <port>");
+        process::exit(1);
+    });
+    info!("Starting keeper.rs at port: {}", config.port);
 
-    let port: u16 =  match std::env::var("KEEPER_PORT") {
-        Ok(n) => n.parse::<u16>().unwrap(),
-        Err(_) => 0xe621,
-    };
-
-    info!("Starting keeper.rs at port: {}", port);
-
-    
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     let listener = TcpListener::bind(addr).unwrap();
 
     let mut keeper = Keeper::new();

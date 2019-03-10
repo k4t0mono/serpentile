@@ -1,6 +1,6 @@
 use serpentine::{Block, Transaction};
 use std::io::prelude::*;
-use std::net::TcpStream; 
+use std::net::TcpStream;
 
 pub struct Ctrl {
     max_size: usize,

@@ -2,48 +2,17 @@
 extern crate simplelog;
 extern crate serpentine;
 
+mod config;
 mod ctrl;
 
-use std::net::{TcpListener, TcpStream};
+use std::{env, process};
+use std::net::{TcpListener, TcpStream, SocketAddr, IpAddr, Ipv4Addr,};
 use std::io::{Read, Write};
 use std::option::Option;
 use serpentine::Transaction;
 use ctrl::*;
-use rand::Rng;
+use config::Config;
 
-
-fn set_logger(level: usize) {
-    use simplelog::*;
-
-    let log_level: LevelFilter = match level {
-        0 => LevelFilter::Off,
-        1 => LevelFilter::Error,
-        2 => LevelFilter::Warn,
-        3 => LevelFilter::Info,
-        4 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    };
-
-    TermLogger::init(log_level, Config::default()).unwrap();
-}
-
-
-fn parse_args() -> (String, usize, usize) {
-    let args: Vec<String> = std::env::args().collect();
-    
-    if args.len() < 3 {
-        eprintln!("Usage: {} <keeper-addr> <mode> [log-level]", args[0]);
-        panic!("Missing args");
-    }
-
-    let keeper_addr = args[1].to_string();
-
-    let mode = args[2].parse::<usize>().unwrap(); 
-
-    let log_level = args.last().unwrap().parse::<usize>().unwrap_or(3);
-
-    (keeper_addr, mode, log_level)
-}
 
 fn handle_client(mut stream: TcpStream) -> Option<Transaction> {
     trace!("New connection from {}", stream.peer_addr().unwrap());
@@ -75,36 +44,40 @@ fn debug_mode() {
     }
 }
 
-fn normal_mode() {
+fn normal_mode(port: u16) {
+    info!("Starting miner.rs at port {}", port);
     let mut ctrl = Ctrl::new(5);
 
-    let listener = TcpListener::bind("0.0.0.0:34254").unwrap();
+    let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+    let listener = TcpListener::bind(socket).unwrap();
     for stream in listener.incoming() {
         let t = handle_client(stream.unwrap());
         if t.is_some() { ctrl.add_entry(t.unwrap()); }
     }
 }
 
-fn register_listener(addr: String) {
+fn register_listener(addr: SocketAddr, port: u16) {
     let mut stream = TcpStream::connect(addr).unwrap();
 
-    let mut rng = rand::thread_rng();
-    let port: u8 = rng.gen_range(0x00, 0xff);
+    let ph = (port >> 8) as u8;
+    let pl = port as u8;
 
-    let buff = vec![0x03, 0xe7, port];
+    let buff = vec![0x03, ph, pl];
 
     stream.write(&buff[..]).unwrap();
 }
 
 fn main() {
-    let (keeper_addr, mode, log_level) = parse_args();
-    set_logger(log_level);
-    info!("Starting miner.rs");
+    let config = Config::new(env::args()).unwrap_or_else(|err| {
+        eprintln!("Error: {}", err);
+        eprintln!("Usage: miner <port> [keeper-addr] [mode]");
+        process::exit(1);
+    });
 
-    register_listener(keeper_addr);
+    register_listener(config.keeper_addr, config.port);
 
-    match mode {
+    match config.mode {
         1 => { debug_mode(); }
-        _ => { normal_mode(); }
+        _ => { normal_mode(config.port); }
     }
 }
